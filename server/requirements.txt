@@ -4,3 +4,4 @@ langchain-google-genai
 langchain
 python-dotenv
 pymongo
+gunicorn
