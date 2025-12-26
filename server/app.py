@@ -114,10 +114,35 @@ def classify_sites():
 
     details.sort(key=lambda x: x['duration'], reverse=True)
 
+    # Calculate Today's Totals
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    pipeline = [
+        {"$match": {"timestamp": {"$gte": today_start}}},
+        {"$group": {
+            "_id": "$classification",
+            "total_duration": {"$sum": "$duration"}
+        }}
+    ]
+    totals = list(history_collection.aggregate(pipeline))
+    
+    today_prod = 0
+    today_dist = 0
+    for t in totals:
+        if t['_id'] == 'Productive':
+            today_prod = t['total_duration']
+        else:
+            today_dist = t['total_duration']
+
     return jsonify({
-        "productive_time": productive_time,
-        "distracting_time": distracting_time,
-        "details": details
+        "current_session": {
+            "productive_time": productive_time,
+            "distracting_time": distracting_time,
+            "details": details
+        },
+        "today_total": {
+            "productive_time": today_prod,
+            "distracting_time": today_dist
+        }
     })
 
 @app.route('/history', methods=['GET'])
